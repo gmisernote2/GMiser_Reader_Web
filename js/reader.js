@@ -626,13 +626,25 @@ export async function openReader(root, bookId, { onExit }) {
     });
   }, { passive: true });
 
-  let selectionAtDown = false;
-  listen(contentEl, "pointerdown", () => { selectionAtDown = !!selection || !window.getSelection()?.isCollapsed; });
-  listen(contentEl, "click", (e) => {
-    if (e.target.closest("a")) e.preventDefault(); // book links never navigate away
-    if (selectionAtDown || Date.now() - lastSelectionAt < 400) return;
+  // Tap detection from raw pointer events on the whole page, not `click` on the text column:
+  // iOS doesn't reliably fire click on plain text, and on an iPad most of the screen is the
+  // empty margin beside the centered column, which must toggle the bars too.
+  const CHROME = ".bar, .panel, .sheet, .scrim, .sel-popup, .indicator, .bright-zone, .modal-backdrop";
+  let tapStart = null;
+  listen(document, "pointerdown", (e) => {
+    if (!e.isPrimary || e.target.closest(CHROME)) { tapStart = null; return; }
+    tapStart = { x: e.clientX, y: e.clientY, t: Date.now(), hadSelection: !!selection || !window.getSelection()?.isCollapsed };
+  });
+  listen(document, "pointerup", (e) => {
+    const s = tapStart;
+    tapStart = null;
+    if (!s || !e.isPrimary || e.target.closest(CHROME)) return;
+    if (Date.now() - s.t > 350 || Math.hypot(e.clientX - s.x, e.clientY - s.y) > 10) return; // drag / long-press
+    if (s.hadSelection || Date.now() - lastSelectionAt < 400) return;
     setOverlay(!overlayVisible);
   });
+  listen(document, "pointercancel", () => { tapStart = null; }); // iOS cancels when a touch becomes a scroll
+  listen(contentEl, "click", (e) => { if (e.target.closest("a")) e.preventDefault(); }); // book links never navigate away
   listen(document, "selectionchange", () => {
     clearTimeout(selTimer);
     selTimer = setTimeout(checkSelection, SELECTION_SETTLE_MS);
@@ -679,6 +691,12 @@ export async function openReader(root, bookId, { onExit }) {
   saveProgressNow();
   syncWakeLock();
   refreshIndicator();
+  try {
+    if (!localStorage.getItem("gmr.tapHintShown")) {
+      localStorage.setItem("gmr.tapHintShown", "1");
+      toast("Toca la página para ver el menú y los ajustes");
+    }
+  } catch { /* storage unavailable: skip the hint */ }
 
   async function exit() {
     if (exited) return;
