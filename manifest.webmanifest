@@ -1,0 +1,14 @@
+{
+  "name": "Gmiser Reader",
+  "short_name": "Gmiser Reader",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "lang": "es",
+  "background_color": "#ECEBE6",
+  "theme_color": "#ECEBE6",
+  "icons": [
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
