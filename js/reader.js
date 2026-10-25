@@ -7,7 +7,7 @@ import * as db from "./db.js";
 import { parseBook, plainText, searchBlocks, chapterRange } from "./book.js";
 import { h, icon, iconButton, toast, promptDialog, choiceDialog, formatDate } from "./ui.js";
 import {
-  settings, update, onChange, applyToDocument,
+  settings, update, onChange, applyToDocument, widthText,
   FONTS, SKINS, POSITION_MODES, BRIGHTNESS_MODES, TTS_LANGUAGES, LIMITS,
 } from "./settings.js";
 import { createTts } from "./tts.js";
@@ -492,6 +492,7 @@ export async function openReader(root, bookId, { onExit }) {
       : `Ocultar barra de posición tras: ${s.positionIndicatorAutoHideSeconds}s`;
     const sizeLabel = label(`Tamaño de letra: ${s.fontSizeSp}`);
     const lineLabel = label(`Interlineado: ${s.lineSpacingMultiplier.toFixed(1)}x`);
+    const widthLabel = label(`Ancho de lectura: ${widthText(s.readWidthRem)}`);
     const brightLabel = label(`Brillo de pantalla: ${Math.round(s.screenBrightness * 100)}%`);
     const autoLabel = label(autohideText);
     sheetBody.replaceChildren(
@@ -503,6 +504,9 @@ export async function openReader(root, bookId, { onExit }) {
       lineLabel,
       slider({ min: LIMITS.MIN_LINE, max: LIMITS.MAX_LINE, step: 0.1, value: s.lineSpacingMultiplier,
         oninput: (v) => { update({ lineSpacingMultiplier: Math.round(v * 10) / 10 }); lineLabel.textContent = `Interlineado: ${v.toFixed(1)}x`; } }),
+      widthLabel,
+      slider({ min: LIMITS.MIN_WIDTH, max: LIMITS.MAX_WIDTH, step: 2, value: s.readWidthRem,
+        oninput: (v) => { update({ readWidthRem: v }); widthLabel.textContent = `Ancho de lectura: ${widthText(v)}`; } }),
       label("Ajustar brillo de lectura"),
       chips(BRIGHTNESS_MODES, s.screenBrightnessMode, (id) => { update({ screenBrightnessMode: id }); renderSettings(); }),
       s.screenBrightnessMode !== "OFF" && brightLabel,
@@ -531,7 +535,7 @@ export async function openReader(root, bookId, { onExit }) {
   // offset to 0 — the same accepted trade-off as Android (CLAUDE.md §1).
   let relayoutTimer = null;
   const offSettings = onChange((s, patch) => {
-    if ("fontFamily" in patch || "fontSizeSp" in patch || "lineSpacingMultiplier" in patch) {
+    if ("fontFamily" in patch || "fontSizeSp" in patch || "lineSpacingMultiplier" in patch || "readWidthRem" in patch) {
       const keep = pos.index;
       applyToDocument(s);
       clearTimeout(relayoutTimer);

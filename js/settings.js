@@ -28,6 +28,8 @@ export const TTS_LANGUAGES = [
 export const LIMITS = {
   MIN_FONT: 14, MAX_FONT: 35,
   MIN_LINE: 1.0, MAX_LINE: 2.0,
+  // Reading column max width in rem; MAX_WIDTH means "use the whole screen".
+  MIN_WIDTH: 30, MAX_WIDTH: 100,
   MIN_BRIGHTNESS: 0.3, MAX_BRIGHTNESS: 1.0,
   MIN_AUTOHIDE: 2, MAX_AUTOHIDE: 10, ALWAYS_VISIBLE: 11,
 };
@@ -37,6 +39,7 @@ const DEFAULTS = {
   fontSizeSp: 18,
   skin: "SISTEMA",
   lineSpacingMultiplier: 1.0,
+  readWidthRem: 46,
   screenBrightness: 1.0,
   screenBrightnessMode: "GESTURE_LEFT",
   positionIndicatorMode: "BOOK",
@@ -60,6 +63,8 @@ function load() {
 
 export const settings = () => current;
 
+export const widthText = (rem) => rem >= LIMITS.MAX_WIDTH ? "toda la pantalla" : `${Math.round(rem * 16)} px`;
+
 export function update(patch) {
   current = { ...current, ...patch };
   try { localStorage.setItem(KEY, JSON.stringify(current)); } catch { /* private mode etc. */ }
@@ -81,6 +86,7 @@ export function applyToDocument(s = current) {
   root.style.setProperty("--read-size", `${s.fontSizeSp}px`);
   // BASE_LINE_HEIGHT_RATIO (1.5, Material's bodyLarge 16/24) × the user's multiplier — Theme.kt.
   root.style.setProperty("--read-line", String(1.5 * s.lineSpacingMultiplier));
+  root.style.setProperty("--read-width", s.readWidthRem >= LIMITS.MAX_WIDTH ? "none" : `${s.readWidthRem}rem`);
   const skin = s.skin === "SISTEMA" ? (darkQuery.matches ? "OSCURO" : "CLARO") : s.skin;
   root.dataset.skin = skin.toLowerCase();
   const meta = document.querySelector('meta[name="theme-color"]');

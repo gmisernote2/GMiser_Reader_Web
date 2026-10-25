@@ -1,7 +1,7 @@
 // Offline app shell. Everything the app needs is precached on install, so after the first visit
 // it launches from the iPad's own cache with no network at all. BUILD is stamped by deploy.sh —
 // a new value means a new cache, which is how a deploy reaches already-installed copies.
-const BUILD = "0.1.1-34517d9-20261024142813";
+const BUILD = "0.1.2-8ca7956-20261025110408";
 const CACHE = `gmr-${BUILD}`;
 const FONTS = ["literata", "inter", "merriweather", "bitter", "eb_garamond", "atkinson_hyperlegible"]
   .flatMap((f) => [`fonts/${f}_regular.ttf`, `fonts/${f}_italic.ttf`]);
